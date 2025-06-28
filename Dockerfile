@@ -22,8 +22,17 @@ RUN apt-get update && apt-get install -y \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
+# Install global packages
 RUN npm install -g n8n puppeteer
 
+# Set working directory
+WORKDIR /home/node/app
+
+# Copy all project files into the container
+COPY . /home/node/app
+
+# Open the n8n port
 EXPOSE 5678
 
+# Run n8n
 CMD ["n8n"]
