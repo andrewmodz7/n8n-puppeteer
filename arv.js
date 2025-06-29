@@ -1,31 +1,92 @@
 const puppeteer = require('puppeteer');
 
-const address = process.argv[2];
-
 (async () => {
+  const address = process.argv[2] || '';
+  if (!address) {
+    console.error(JSON.stringify({ error: 'No address provided' }));
+    process.exit(1);
+  }
+
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   const page = await browser.newPage();
 
   try {
-    await page.goto('https://www.saleswise.app/cmas', { waitUntil: 'networkidle2', timeout: 0 });
+    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
 
-    // Wait for input with longer timeout
-    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 30000 });
+    // Login
+    await page.type('input[name="email"]', 'andrewmodz7@gmail.com');
+    await page.type('input[name="password"]', 'Am120701*');
+    await Promise.all([
+      page.click('button[type="submit"]'),
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    ]);
 
-    // Type the address
+    // Type address and click suggestion
+    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
     await page.type('input[placeholder="Find a property"]', address);
-    await page.keyboard.press('Enter');
+    await page.waitForTimeout(2000);
+    await page.waitForSelector('.absolute ul li', { timeout: 5000 });
+    await page.click('.absolute ul li');
 
-    // Wait for the CMA PDF to be generated (or you can wait for download button to appear, etc.)
-    await page.waitForTimeout(10000); // adjust this later to wait for actual element
+    // Click 'Confirm'
+    await page.waitForSelector('button', { timeout: 30000 });
+    await page.evaluate(() => {
+      const confirmBtn = [...document.querySelectorAll('button')].find(btn =>
+        btn.innerText.toLowerCase().includes('confirm')
+      );
+      confirmBtn?.click();
+    });
 
-    console.log(`✅ Finished processing CMA for: ${address}`);
+    // Click 'Pick for me'
+    await page.waitForSelector('button', { timeout: 120000 });
+    await page.evaluate(() => {
+      const pickBtn = [...document.querySelectorAll('button')].find(btn =>
+        btn.innerText.toLowerCase().includes('pick for me')
+      );
+      pickBtn?.click();
+    });
+
+    // Copy Share Link
+    await page.waitForSelector('button', { timeout: 30000 });
+    const shareLink = await page.evaluate(() => {
+      const copyBtn = [...document.querySelectorAll('button')].find(btn =>
+        btn.innerText.toLowerCase().includes('copy share link')
+      );
+      return copyBtn?.getAttribute('data-clipboard-text') || null;
+    });
+
+    const dealData = await page.evaluate(() => {
+      const summary = {};
+      const summaryElements = document.querySelectorAll('section div');
+      summaryElements.forEach((el) => {
+        if (el.innerText.includes('$') && el.innerText.toLowerCase().includes('arv')) {
+          summary.arv = el.innerText;
+        }
+        if (el.innerText.toLowerCase().includes('beds') && el.innerText.toLowerCase().includes('baths')) {
+          summary.details = el.innerText;
+        }
+      });
+      return summary;
+    });
+
+    if (!shareLink) {
+      console.error(JSON.stringify({ error: 'Share link not found' }));
+      process.exit(1);
+    }
+
+    console.log(JSON.stringify({
+      address,
+      shareLink,
+      arv: dealData.arv || null,
+      details: dealData.details || null
+    }));
+
   } catch (err) {
-    console.error({ error: err.message });
+    console.error(JSON.stringify({ error: err.message }));
   } finally {
     await browser.close();
   }
