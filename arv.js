@@ -26,21 +26,25 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' }),
     ]);
 
-    // Log current URL to verify login worked
     console.log('🔒 Current URL after login:', page.url());
+    await page.waitForSelector('body');
 
-    // Wait for address input to confirm dashboard loaded
+    // Type the address
     await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
     const input = await page.$('input[placeholder*="Find"]');
     await input.type(address, { delay: 50 });
 
-    // Wait for dropdown and click first suggestion
-    await page.waitForTimeout(2500);
-    const dropdownItem = await page.$('li.cursor-pointer');
-    if (!dropdownItem) throw new Error('Dropdown suggestion not found');
-    await dropdownItem.click();
+    // Wait and click the correct dropdown suggestion
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await page.waitForSelector('ul[role="listbox"] > li', { timeout: 5000 });
+    const firstResult = await page.$('ul[role="listbox"] > li');
+    if (firstResult) {
+      await firstResult.click();
+    } else {
+      throw new Error("Address suggestion not found in dropdown");
+    }
 
-    // Wait for 'Confirm' button and click it
+    // Wait for and click 'Confirm'
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
       const confirmBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -49,7 +53,7 @@ const puppeteer = require('puppeteer');
       confirmBtn?.click();
     });
 
-    // Wait for comps and click 'Pick for me'
+    // Wait for comps to load, then click 'Pick for me'
     await page.waitForSelector('button', { timeout: 120000 });
     await page.evaluate(() => {
       const pickBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -58,7 +62,7 @@ const puppeteer = require('puppeteer');
       pickBtn?.click();
     });
 
-    // Copy Share Link
+    // Wait for Share Link button and grab it
     await page.waitForSelector('button', { timeout: 30000 });
     const shareLink = await page.evaluate(() => {
       const copyBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -67,7 +71,7 @@ const puppeteer = require('puppeteer');
       return copyBtn?.getAttribute('data-clipboard-text') || null;
     });
 
-    // Extract ARV + summary
+    // Extract ARV and summary info
     const dealData = await page.evaluate(() => {
       const summary = {};
       const textBlocks = Array.from(document.querySelectorAll('section, div')).map(el => el.innerText);
