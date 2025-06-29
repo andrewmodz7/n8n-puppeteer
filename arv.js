@@ -25,10 +25,10 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' }),
     ]);
 
-    // Type address and click suggestion
+    // Type address and click dropdown suggestion
     await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
     await page.type('input[placeholder="Find a property"]', address);
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Give time for dropdown to load
     await page.waitForSelector('.absolute ul li', { timeout: 5000 });
     await page.click('.absolute ul li');
 
@@ -59,17 +59,18 @@ const puppeteer = require('puppeteer');
       return copyBtn?.getAttribute('data-clipboard-text') || null;
     });
 
+    // Extract ARV and bed/bath summary (rough fallback parsing)
     const dealData = await page.evaluate(() => {
       const summary = {};
-      const summaryElements = document.querySelectorAll('section div');
-      summaryElements.forEach((el) => {
-        if (el.innerText.includes('$') && el.innerText.toLowerCase().includes('arv')) {
-          summary.arv = el.innerText;
+      const textBlocks = Array.from(document.querySelectorAll('section, div')).map(el => el.innerText);
+      for (const text of textBlocks) {
+        if (!summary.arv && /\$[\d,.]+/.test(text) && /arv/i.test(text)) {
+          summary.arv = text;
         }
-        if (el.innerText.toLowerCase().includes('beds') && el.innerText.toLowerCase().includes('baths')) {
-          summary.details = el.innerText;
+        if (!summary.details && /bed/i.test(text) && /bath/i.test(text)) {
+          summary.details = text;
         }
-      });
+      }
       return summary;
     });
 
