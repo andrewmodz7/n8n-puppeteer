@@ -26,12 +26,12 @@ const puppeteer = require('puppeteer');
     ]);
 
     // Wait for UI to render after login
-    await page.waitForTimeout(5000);
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Address search
     await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
     await page.type('input[placeholder="Find a property"]', address);
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
