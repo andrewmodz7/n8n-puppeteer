@@ -1,12 +1,8 @@
 const puppeteer = require('puppeteer');
 
-(async () => {
-  const address = process.argv[2];
-  if (!address) {
-    console.error('No address provided!');
-    process.exit(1);
-  }
+const address = process.argv[2];
 
+(async () => {
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -15,38 +11,21 @@ const puppeteer = require('puppeteer');
   const page = await browser.newPage();
 
   try {
-    // 1. Go to the site
-    await page.goto('https://saleswise.ai/tools/arv-calculator', {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000
-    });
+    await page.goto('https://www.saleswise.app/cmas', { waitUntil: 'networkidle2', timeout: 0 });
 
-    // 2. Wait for and select the search input
-    await page.waitForSelector('input[placeholder*="Find a property"]', {
-      visible: true,
-      timeout: 20000
-    });
+    // Wait for input with longer timeout
+    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 30000 });
 
-    // 3. Type in the address
-    await page.type('input[placeholder*="Find a property"]', address, { delay: 50 });
-
-    // 4. Press Enter to search
+    // Type the address
+    await page.type('input[placeholder="Find a property"]', address);
     await page.keyboard.press('Enter');
 
-    // 5. Wait for the results to load (adjust if needed)
-    await page.waitForTimeout(8000);
+    // Wait for the CMA PDF to be generated (or you can wait for download button to appear, etc.)
+    await page.waitForTimeout(10000); // adjust this later to wait for actual element
 
-    // 6. Extract the ARV (edit selector if this changes)
-    const arvSelector = 'div.flex.flex-col.gap-2.text-right.text-sm span.font-semibold';
-    await page.waitForSelector(arvSelector, { timeout: 10000 });
-
-    const arv = await page.$eval(arvSelector, el => el.textContent.trim());
-
-    // 7. Output it
-    console.log(JSON.stringify({ arv }));
-
+    console.log(`✅ Finished processing CMA for: ${address}`);
   } catch (err) {
-    console.error(JSON.stringify({ error: err.message }));
+    console.error({ error: err.message });
   } finally {
     await browser.close();
   }
