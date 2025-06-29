@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Puppeteer deps
+# Puppeteer dependencies
 RUN apt-get update && apt-get install -y \
   wget \
   ca-certificates \
@@ -18,21 +18,16 @@ RUN apt-get update && apt-get install -y \
   libxcomposite1 \
   libxdamage1 \
   libxrandr2 \
+  libgbm1 \
   xdg-utils \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-# Install global packages
+# Install n8n and puppeteer globally
 RUN npm install -g n8n puppeteer
 
-# Set working directory
-WORKDIR /home/node/app
-
-# Copy all project files into the container
-COPY . /home/node/app
-
-# Open the n8n port
+# Expose n8n default port
 EXPOSE 5678
 
-# Run n8n
+# Start n8n
 CMD ["n8n"]
