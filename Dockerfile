@@ -23,7 +23,16 @@ RUN apt-get update && apt-get install -y \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-# Install n8n and puppeteer globally
+# Set working directory
+WORKDIR /app
+
+# ✅ COPY all your repo files into the container
+COPY . .
+
+# ✅ Install any local dependencies (like your script or puppeteer tools)
+RUN npm install
+
+# Install n8n and puppeteer globally (if needed globally, though likely already covered above)
 RUN npm install -g n8n puppeteer
 
 # Expose n8n default port
