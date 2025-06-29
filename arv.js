@@ -1,67 +1,49 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-  const address = process.argv[2] || '';
+  const address = process.argv[2];
   if (!address) {
-    console.error(JSON.stringify({ error: 'No address provided' }));
+    console.error('No address provided!');
     process.exit(1);
   }
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   const page = await browser.newPage();
 
   try {
-    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
+    // 1. Go to the site
+    await page.goto('https://saleswise.ai/tools/arv-calculator', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
 
-    // Login
-    await page.type('input[name="email"]', 'andrewmodz7@gmail.com');
-    await page.type('input[name="password"]', 'Am120701*');
-    await Promise.all([
-      page.click('button[type="submit"]'),
-      page.waitForNavigation({ waitUntil: 'networkidle2' })
-    ]);
+    // 2. Wait for and select the search input
+    await page.waitForSelector('input[placeholder*="Find a property"]', {
+      visible: true,
+      timeout: 20000
+    });
 
-    // Wait for UI to render after login
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // 3. Type in the address
+    await page.type('input[placeholder*="Find a property"]', address, { delay: 50 });
 
-    // Address search
-    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
-    await page.type('input[placeholder="Find a property"]', address);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    await page.keyboard.press('ArrowDown');
+    // 4. Press Enter to search
     await page.keyboard.press('Enter');
 
-    // Confirm comp criteria
-    await page.waitForSelector('button', { timeout: 30000 });
-    await page.evaluate(() => {
-      [...document.querySelectorAll('button')].find(btn => btn.innerText.includes('Confirm')).click();
-    });
+    // 5. Wait for the results to load (adjust if needed)
+    await page.waitForTimeout(8000);
 
-    // Wait for comps to generate
-    await page.waitForSelector('button', { timeout: 120000 });
-    await page.evaluate(() => {
-      [...document.querySelectorAll('button')].find(btn => btn.innerText.includes('Pick for me')).click();
-    });
+    // 6. Extract the ARV (edit selector if this changes)
+    const arvSelector = 'div.flex.flex-col.gap-2.text-right.text-sm span.font-semibold';
+    await page.waitForSelector(arvSelector, { timeout: 10000 });
 
-    // Wait for Share Link button and extract it
-    await page.waitForSelector('button', { timeout: 30000 });
-    const shareLink = await page.evaluate(() => {
-      const copyBtn = [...document.querySelectorAll('button')].find(btn =>
-        btn.innerText.includes('Copy Share Link') && btn.getAttribute('data-clipboard-text')
-      );
-      return copyBtn?.getAttribute('data-clipboard-text') || null;
-    });
+    const arv = await page.$eval(arvSelector, el => el.textContent.trim());
 
-    if (!shareLink) {
-      console.error(JSON.stringify({ error: 'Share link not found' }));
-      process.exit(1);
-    }
-
-    console.log(JSON.stringify({ address, shareLink }));
+    // 7. Output it
+    console.log(JSON.stringify({ arv }));
 
   } catch (err) {
     console.error(JSON.stringify({ error: err.message }));
