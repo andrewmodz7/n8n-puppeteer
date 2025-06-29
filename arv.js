@@ -26,9 +26,8 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' }),
     ]);
 
-    // Log current URL + screenshot to verify login worked
+    // Log current URL to verify login worked
     console.log('🔒 Current URL after login:', page.url());
-    await page.screenshot({ path: 'post-login-debug.png' });
 
     // Wait for address input to confirm dashboard loaded
     await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
@@ -36,8 +35,10 @@ const puppeteer = require('puppeteer');
     await input.type(address, { delay: 50 });
 
     // Wait for dropdown and click first suggestion
-    await page.waitForSelector('.absolute ul li', { timeout: 5000 });
-    await page.click('.absolute ul li');
+    await page.waitForTimeout(2500);
+    const dropdownItem = await page.$('li.cursor-pointer');
+    if (!dropdownItem) throw new Error('Dropdown suggestion not found');
+    await dropdownItem.click();
 
     // Wait for 'Confirm' button and click it
     await page.waitForSelector('button', { timeout: 30000 });
