@@ -25,10 +25,13 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' })
     ]);
 
+    // Wait for UI to render after login
+    await page.waitForTimeout(5000);
+
     // Address search
     await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
     await page.type('input[placeholder="Find a property"]', address);
-    await page.waitForTimeout(2000); // Wait for suggestions
+    await page.waitForTimeout(2000);
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
