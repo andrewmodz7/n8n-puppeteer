@@ -26,8 +26,8 @@ const puppeteer = require('puppeteer');
     ]);
 
     // Address search
-    await page.waitForSelector('input[placeholder="Enter an address"]', { timeout: 15000 });
-    await page.type('input[placeholder="Enter an address"]', address);
+    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
+    await page.type('input[placeholder="Find a property"]', address);
     await page.waitForTimeout(2000); // Wait for suggestions
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
