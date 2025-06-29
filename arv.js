@@ -16,6 +16,7 @@ const puppeteer = require('puppeteer');
 
   try {
     await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
+    await page.waitForSelector('input[name="email"]', { timeout: 10000 });
 
     // Login
     await page.type('input[name="email"]', 'andrewmodz7@gmail.com');
@@ -25,14 +26,20 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' }),
     ]);
 
-    // Type address and click dropdown suggestion
-    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 15000 });
-    await page.type('input[placeholder="Find a property"]', address);
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Give time for dropdown to load
+    // Log current URL + screenshot to verify login worked
+    console.log('🔒 Current URL after login:', page.url());
+    await page.screenshot({ path: 'post-login-debug.png' });
+
+    // Wait for address input to confirm dashboard loaded
+    await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
+    const input = await page.$('input[placeholder*="Find"]');
+    await input.type(address, { delay: 50 });
+
+    // Wait for dropdown and click first suggestion
     await page.waitForSelector('.absolute ul li', { timeout: 5000 });
     await page.click('.absolute ul li');
 
-    // Click 'Confirm'
+    // Wait for 'Confirm' button and click it
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
       const confirmBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -41,7 +48,7 @@ const puppeteer = require('puppeteer');
       confirmBtn?.click();
     });
 
-    // Click 'Pick for me'
+    // Wait for comps and click 'Pick for me'
     await page.waitForSelector('button', { timeout: 120000 });
     await page.evaluate(() => {
       const pickBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -59,7 +66,7 @@ const puppeteer = require('puppeteer');
       return copyBtn?.getAttribute('data-clipboard-text') || null;
     });
 
-    // Extract ARV and bed/bath summary (rough fallback parsing)
+    // Extract ARV + summary
     const dealData = await page.evaluate(() => {
       const summary = {};
       const textBlocks = Array.from(document.querySelectorAll('section, div')).map(el => el.innerText);
