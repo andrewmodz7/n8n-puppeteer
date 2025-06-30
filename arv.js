@@ -104,11 +104,13 @@ const puppeteer = require('puppeteer');
     // Wait for the report to load
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Extract the Estimated ARV value using precise HTML structure
+    // Extract the Estimated ARV value
     const estimatedARV = await page.evaluate(() => {
+      // Find all h3s and look for the one with "Estimated ARV"
       const h3s = Array.from(document.querySelectorAll('h3'));
       for (const h3 of h3s) {
         if (h3.innerText.trim() === 'Estimated ARV') {
+          // The ARV value is in the next sibling <p>
           const p = h3.nextElementSibling;
           if (p && p.tagName === 'P') {
             return p.innerText.trim();
