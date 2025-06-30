@@ -97,14 +97,18 @@ const puppeteer = require('puppeteer');
     // Wait for the report to load
     await new Promise(resolve => setTimeout(resolve, 3000));
 
+    // Wait up to 3 minutes (180,000 ms) for the ARV h3 to appear
+    await page.waitForSelector('h3', { timeout: 180000 });
+
     // Extract the Estimated ARV value
     const estimatedARV = await page.evaluate(() => {
-      // Find all h3s and look for the one with "Estimated ARV"
       const h3s = Array.from(document.querySelectorAll('h3'));
       for (const h3 of h3s) {
         if (h3.innerText.trim() === 'Estimated ARV') {
-          // The ARV value is in the next sibling <p>
-          const p = h3.nextElementSibling;
+          let p = h3.nextElementSibling;
+          if (p && p.tagName === 'DIV') {
+            p = p.querySelector('p');
+          }
           if (p && p.tagName === 'P') {
             return p.innerText.trim();
           }
