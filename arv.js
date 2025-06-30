@@ -36,14 +36,7 @@ const puppeteer = require('puppeteer');
     // Add extra wait after login to allow SPA to render
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Wait for the dashboard greeting to appear
-    console.log('⏳ Waiting for dashboard greeting...');
-    await page.waitForSelector('h1.text-3xl', { timeout: 30000 });
-    console.log('✅ Dashboard greeting found!');
-    const afterGreetingHtml = await page.content();
-    console.log('📝 HTML after dashboard greeting:', afterGreetingHtml.substring(0, 2000));
-
-    // Now wait for the search input with the correct placeholder
+    // Wait for the search input to appear after login
     console.log('⏳ Waiting for search input...');
     await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 30000 });
     console.log('✅ Search input found!');
