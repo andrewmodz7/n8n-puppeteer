@@ -8,12 +8,13 @@ const puppeteer = require('puppeteer');
   }
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     timeout: 0 // disables overall timeout (optional)
   });
 
   const page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
   page.setDefaultNavigationTimeout(60000); // sets navigation timeout to 60s
 
   try {
@@ -31,6 +32,9 @@ const puppeteer = require('puppeteer');
     console.log('🔒 Current URL after login:', page.url());
     const postLoginHtml = await page.content();
     console.log('📝 FULL HTML after login:', postLoginHtml.substring(0, 2000));
+
+    // Add extra wait after login to allow SPA to render
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Wait for the dashboard greeting to appear
     console.log('⏳ Waiting for dashboard greeting...');
