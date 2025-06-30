@@ -51,16 +51,31 @@ const puppeteer = require('puppeteer');
     console.log('📝 HTML after search input:', afterInputHtml.substring(0, 2000));
 
     const input = await page.$('input[placeholder="Find a property"]');
-    await input.click();
+    await input.click({ clickCount: 3 });
+    await input.press('Backspace');
     await input.type(address, { delay: 50 });
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Give more time for dropdown to appear
-    await page.waitForSelector('div.absolute.z-10 button', { visible: true, timeout: 10000 });
-    const beforeDropdownHtml = await page.content();
-    console.log('📝 HTML snippet before dropdown click:', beforeDropdownHtml.substring(0, 500));
-    const firstOption = await page.$('div.absolute.z-10 button');
-    await firstOption.click();
-    const afterDropdownHtml = await page.content();
-    console.log('📝 HTML snippet after dropdown click:', afterDropdownHtml.substring(0, 500));
+    // Wait longer for dropdown to appear
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Log HTML after typing
+    const afterTypeHtml = await page.content();
+    console.log('📝 HTML after typing address:', afterTypeHtml.substring(0, 2000));
+    // Try a more flexible selector for the dropdown button
+    await page.waitForSelector('button', { visible: true, timeout: 15000 });
+    const dropdownButtons = await page.$$('button');
+    let firstOption = null;
+    for (const btn of dropdownButtons) {
+      const text = await (await btn.getProperty('innerText')).jsonValue();
+      if (text && text.toLowerCase().includes(address.split(',')[0].toLowerCase())) {
+        firstOption = btn;
+        break;
+      }
+    }
+    if (firstOption) {
+      await firstOption.click();
+      console.log('✅ Dropdown option clicked!');
+    } else {
+      console.error('❌ Dropdown option not found!');
+    }
 
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
