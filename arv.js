@@ -30,24 +30,9 @@ const puppeteer = require('puppeteer');
 
     console.log('🔒 Current URL after login:', page.url());
     const postLoginHtml = await page.content();
-    console.log('📝 HTML snippet after login:', postLoginHtml.substring(0, 500));
+    console.log('📝 FULL HTML after login:', postLoginHtml.substring(0, 2000));
 
-    // Wait for address input - ensure we're on the right page
-    try {
-      await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'domcontentloaded' });
-      console.log('🧭 URL after goto /dashboard/new:', page.url());
-      const afterGotoHtml = await page.content();
-      console.log('📝 HTML snippet after goto /dashboard/new:', afterGotoHtml.substring(0, 500));
-    } catch (e) {
-      const gotoErrorHtml = await page.content();
-      console.error(JSON.stringify({
-        error: 'Error during goto /dashboard/new: ' + e.message,
-        url: page.url(),
-        htmlSnippet: gotoErrorHtml.substring(0, 1000)
-      }));
-      throw e;
-    }
-
+    // Wait for address input - interact with search bar immediately after login
     try {
       console.log('⏳ Waiting for selector: input[placeholder*="Find"]');
       await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
