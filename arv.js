@@ -32,7 +32,9 @@ const puppeteer = require('puppeteer');
     await page.screenshot({ path: 'post-login-debug.png' });
 
     // Wait for address input - ensure we're on the right page
-    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
+    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'domcontentloaded' });
+    await page.screenshot({ path: 'after-goto-dashboard-new.png' });
+    console.log('🧭 URL after goto /dashboard/new:', page.url());
     await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
     const input = await page.$('input[placeholder*="Find"]');
 
