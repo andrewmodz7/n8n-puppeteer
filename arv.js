@@ -72,9 +72,16 @@ const puppeteer = require('puppeteer');
 
     // Wait for and click the Confirm Information button
     await page.waitForSelector('button', { visible: true, timeout: 20000 });
-    const confirmBtn = await page.$x("//button[contains(., 'Confirm Information')]");
-    if (confirmBtn.length > 0) {
-      await confirmBtn[0].click();
+    const confirmClicked = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase().includes('confirm information'));
+      if (btn) {
+        btn.click();
+        return true;
+      }
+      return false;
+    });
+    if (confirmClicked) {
       console.log('✅ Clicked Confirm Information');
     } else {
       console.error('❌ Confirm Information button not found!');
@@ -85,9 +92,16 @@ const puppeteer = require('puppeteer');
     await new Promise(resolve => setTimeout(resolve, 30000));
 
     // Click the 'Pick for me' button
-    const pickForMeBtn = await page.$x("//button[contains(., 'Pick for me')]");
-    if (pickForMeBtn.length > 0) {
-      await pickForMeBtn[0].click();
+    const pickClicked = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase().includes('pick for me'));
+      if (btn) {
+        btn.click();
+        return true;
+      }
+      return false;
+    });
+    if (pickClicked) {
       console.log('✅ Clicked Pick for me');
     } else {
       console.error('❌ Pick for me button not found!');
