@@ -29,23 +29,52 @@ const puppeteer = require('puppeteer');
     ]);
 
     console.log('🔒 Current URL after login:', page.url());
-    await page.screenshot({ path: 'post-login-debug.png' });
+    const postLoginHtml = await page.content();
+    console.log('📝 HTML snippet after login:', postLoginHtml.substring(0, 500));
 
     // Wait for address input - ensure we're on the right page
-    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'domcontentloaded' });
-    await page.screenshot({ path: 'after-goto-dashboard-new.png' });
-    console.log('🧭 URL after goto /dashboard/new:', page.url());
-    await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
-    const input = await page.$('input[placeholder*="Find"]');
+    try {
+      await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'domcontentloaded' });
+      console.log('🧭 URL after goto /dashboard/new:', page.url());
+      const afterGotoHtml = await page.content();
+      console.log('📝 HTML snippet after goto /dashboard/new:', afterGotoHtml.substring(0, 500));
+    } catch (e) {
+      const gotoErrorHtml = await page.content();
+      console.error(JSON.stringify({
+        error: 'Error during goto /dashboard/new: ' + e.message,
+        url: page.url(),
+        htmlSnippet: gotoErrorHtml.substring(0, 1000)
+      }));
+      throw e;
+    }
 
+    try {
+      console.log('⏳ Waiting for selector: input[placeholder*="Find"]');
+      await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
+      console.log('✅ Selector found: input[placeholder*="Find"]');
+      const afterInputHtml = await page.content();
+      console.log('📝 HTML snippet after finding input:', afterInputHtml.substring(0, 500));
+    } catch (e) {
+      const inputErrorHtml = await page.content();
+      console.error(JSON.stringify({
+        error: 'Error waiting for address input: ' + e.message,
+        url: page.url(),
+        htmlSnippet: inputErrorHtml.substring(0, 1000)
+      }));
+      throw e;
+    }
+
+    const input = await page.$('input[placeholder*="Find"]');
     await input.click();
     await input.type(address, { delay: 50 });
     await page.waitForTimeout(1500); // Give more time for dropdown to appear
-    await page.waitForSelector('ul[role="listbox"] > li', { visible: true, timeout: 10000 });
-    await page.screenshot({ path: 'before-dropdown-click.png' });
-    const firstOption = await page.$('ul[role="listbox"] > li');
+    await page.waitForSelector('div.absolute.z-10 button', { visible: true, timeout: 10000 });
+    const beforeDropdownHtml = await page.content();
+    console.log('📝 HTML snippet before dropdown click:', beforeDropdownHtml.substring(0, 500));
+    const firstOption = await page.$('div.absolute.z-10 button');
     await firstOption.click();
-    await page.screenshot({ path: 'after-dropdown-click.png' });
+    const afterDropdownHtml = await page.content();
+    console.log('📝 HTML snippet after dropdown click:', afterDropdownHtml.substring(0, 500));
 
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
@@ -98,7 +127,12 @@ const puppeteer = require('puppeteer');
     }));
 
   } catch (err) {
-    console.error(JSON.stringify({ error: err.message }));
+    const errorHtml = await page.content();
+    console.error(JSON.stringify({
+      error: err.message,
+      url: page.url(),
+      htmlSnippet: errorHtml.substring(0, 1000)
+    }));
   } finally {
     await browser.close();
   }
