@@ -32,24 +32,21 @@ const puppeteer = require('puppeteer');
     const postLoginHtml = await page.content();
     console.log('📝 FULL HTML after login:', postLoginHtml.substring(0, 2000));
 
-    // Wait for address input - interact with search bar immediately after login
-    try {
-      console.log('⏳ Waiting for selector: input[placeholder*="Find"]');
-      await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
-      console.log('✅ Selector found: input[placeholder*="Find"]');
-      const afterInputHtml = await page.content();
-      console.log('📝 HTML snippet after finding input:', afterInputHtml.substring(0, 500));
-    } catch (e) {
-      const inputErrorHtml = await page.content();
-      console.error(JSON.stringify({
-        error: 'Error waiting for address input: ' + e.message,
-        url: page.url(),
-        htmlSnippet: inputErrorHtml.substring(0, 1000)
-      }));
-      throw e;
-    }
+    // Wait for the dashboard greeting to appear
+    console.log('⏳ Waiting for dashboard greeting...');
+    await page.waitForSelector('h1.text-3xl', { timeout: 30000 });
+    console.log('✅ Dashboard greeting found!');
+    const afterGreetingHtml = await page.content();
+    console.log('📝 HTML after dashboard greeting:', afterGreetingHtml.substring(0, 2000));
 
-    const input = await page.$('input[placeholder*="Find"]');
+    // Now wait for the search input with the correct placeholder
+    console.log('⏳ Waiting for search input...');
+    await page.waitForSelector('input[placeholder="Find a property"]', { timeout: 30000 });
+    console.log('✅ Search input found!');
+    const afterInputHtml = await page.content();
+    console.log('📝 HTML after search input:', afterInputHtml.substring(0, 2000));
+
+    const input = await page.$('input[placeholder="Find a property"]');
     await input.click();
     await input.type(address, { delay: 50 });
     await page.waitForTimeout(1500); // Give more time for dropdown to appear
