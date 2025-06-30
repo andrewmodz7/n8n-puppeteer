@@ -104,15 +104,15 @@ const puppeteer = require('puppeteer');
     // Wait for the report to load
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Extract the Estimated ARV value
+    // Extract the Estimated ARV value using precise HTML structure
     const estimatedARV = await page.evaluate(() => {
-      // Find all divs and look for one that contains "Estimated ARV"
-      const divs = Array.from(document.querySelectorAll('div'));
-      for (const div of divs) {
-        if (div.innerText && div.innerText.includes('Estimated ARV')) {
-          // Try to extract the value using regex
-          const match = div.innerText.match(/\$[\d,]+\s*-\s*\$[\d,]+/);
-          if (match) return match[0];
+      const h3s = Array.from(document.querySelectorAll('h3'));
+      for (const h3 of h3s) {
+        if (h3.innerText.trim() === 'Estimated ARV') {
+          const p = h3.nextElementSibling;
+          if (p && p.tagName === 'P') {
+            return p.innerText.trim();
+          }
         }
       }
       return null;
