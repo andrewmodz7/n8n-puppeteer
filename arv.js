@@ -9,10 +9,12 @@ const puppeteer = require('puppeteer');
 
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    timeout: 0 // disables overall timeout (optional)
   });
 
   const page = await browser.newPage();
+  page.setDefaultNavigationTimeout(60000); // sets navigation timeout to 60s
 
   try {
     await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
@@ -26,25 +28,23 @@ const puppeteer = require('puppeteer');
       page.waitForNavigation({ waitUntil: 'networkidle2' }),
     ]);
 
-    // Log current URL + screenshot to verify login worked
     console.log('🔒 Current URL after login:', page.url());
     await page.screenshot({ path: 'post-login-debug.png' });
 
-    // Wait for address input to confirm dashboard loaded
+    // Wait for address input
+    await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
     await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
     const input = await page.$('input[placeholder*="Find"]');
 
-    // ✅ FOCUS + TYPE (corrected)
-    await input.click(); // focus the field
-    await input.type(address, { delay: 50 }); // type address slowly
-    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for dropdown
+    await input.click(); // ✅ new: focus the input first
+    await input.type(address, { delay: 50 });
 
-    // ✅ SELECT FROM DROPDOWN
+    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for dropdown to appear
+
     await page.waitForSelector('ul[role="listbox"] > li', { timeout: 8000 });
     const firstOption = await page.$('ul[role="listbox"] > li');
     await firstOption.click();
 
-    // Wait for 'Confirm' button and click it
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
       const confirmBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -53,7 +53,6 @@ const puppeteer = require('puppeteer');
       confirmBtn?.click();
     });
 
-    // Wait for comps and click 'Pick for me'
     await page.waitForSelector('button', { timeout: 120000 });
     await page.evaluate(() => {
       const pickBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -62,7 +61,6 @@ const puppeteer = require('puppeteer');
       pickBtn?.click();
     });
 
-    // Copy Share Link
     await page.waitForSelector('button', { timeout: 30000 });
     const shareLink = await page.evaluate(() => {
       const copyBtn = [...document.querySelectorAll('button')].find(btn =>
@@ -71,7 +69,6 @@ const puppeteer = require('puppeteer');
       return copyBtn?.getAttribute('data-clipboard-text') || null;
     });
 
-    // Extract ARV + summary
     const dealData = await page.evaluate(() => {
       const summary = {};
       const textBlocks = Array.from(document.querySelectorAll('section, div')).map(el => el.innerText);
