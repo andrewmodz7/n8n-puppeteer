@@ -70,32 +70,32 @@ const puppeteer = require('puppeteer');
       console.error('❌ Dropdown option not found!');
     }
 
-    await page.waitForSelector('button', { timeout: 30000 });
-    await page.evaluate(() => {
-      const confirmBtn = [...document.querySelectorAll('button')].find(btn =>
-        btn.innerText.toLowerCase().includes('confirm')
-      );
-      confirmBtn?.click();
-    });
+    // Wait for and click the Confirm Information button
+    await page.waitForSelector('button', { visible: true, timeout: 20000 });
+    const confirmBtn = await page.$x("//button[contains(., 'Confirm Information')]");
+    if (confirmBtn.length > 0) {
+      await confirmBtn[0].click();
+      console.log('✅ Clicked Confirm Information');
+    } else {
+      console.error('❌ Confirm Information button not found!');
+      process.exit(1);
+    }
 
-    await page.waitForSelector('button', { timeout: 120000 });
-    await page.evaluate(() => {
-      const pickBtn = [...document.querySelectorAll('button')].find(btn =>
-        btn.innerText.toLowerCase().includes('pick for me')
-      );
-      pickBtn?.click();
-    });
+    // Wait 30 seconds for comps to load
+    await new Promise(resolve => setTimeout(resolve, 30000));
 
-    await page.waitForSelector('button', { timeout: 30000 });
-    const shareLink = await page.evaluate(() => {
-      const copyBtn = [...document.querySelectorAll('button')].find(btn =>
-        btn.innerText.toLowerCase().includes('copy share link')
-      );
-      return copyBtn?.getAttribute('data-clipboard-text') || null;
-    });
+    // Click the 'Pick for me' button
+    const pickForMeBtn = await page.$x("//button[contains(., 'Pick for me')]");
+    if (pickForMeBtn.length > 0) {
+      await pickForMeBtn[0].click();
+      console.log('✅ Clicked Pick for me');
+    } else {
+      console.error('❌ Pick for me button not found!');
+      process.exit(1);
+    }
 
-    // Wait for the report to load
-    await new Promise(resolve => setTimeout(resolve, 120000)); // Wait 2 minutes for the comp report to load
+    // Wait a few seconds for the comp report to load
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Extract the Estimated ARV value
     const estimatedARV = await page.evaluate(() => {
