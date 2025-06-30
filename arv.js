@@ -49,7 +49,7 @@ const puppeteer = require('puppeteer');
     const input = await page.$('input[placeholder="Find a property"]');
     await input.click();
     await input.type(address, { delay: 50 });
-    await page.waitForTimeout(1500); // Give more time for dropdown to appear
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Give more time for dropdown to appear
     await page.waitForSelector('div.absolute.z-10 button', { visible: true, timeout: 10000 });
     const beforeDropdownHtml = await page.content();
     console.log('📝 HTML snippet before dropdown click:', beforeDropdownHtml.substring(0, 500));
