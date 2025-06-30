@@ -101,30 +101,31 @@ const puppeteer = require('puppeteer');
       return copyBtn?.getAttribute('data-clipboard-text') || null;
     });
 
-    const dealData = await page.evaluate(() => {
-      const summary = {};
-      const textBlocks = Array.from(document.querySelectorAll('section, div')).map(el => el.innerText);
-      for (const text of textBlocks) {
-        if (!summary.arv && /\$[\d,.]+/.test(text) && /arv/i.test(text)) {
-          summary.arv = text;
-        }
-        if (!summary.details && /bed/i.test(text) && /bath/i.test(text)) {
-          summary.details = text;
+    // Wait for the report to load
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Extract the Estimated ARV value
+    const estimatedARV = await page.evaluate(() => {
+      // Find all divs and look for one that contains "Estimated ARV"
+      const divs = Array.from(document.querySelectorAll('div'));
+      for (const div of divs) {
+        if (div.innerText && div.innerText.includes('Estimated ARV')) {
+          // Try to extract the value using regex
+          const match = div.innerText.match(/\$[\d,]+\s*-\s*\$[\d,]+/);
+          if (match) return match[0];
         }
       }
-      return summary;
+      return null;
     });
 
-    if (!shareLink) {
-      console.error(JSON.stringify({ error: 'Share link not found' }));
+    if (!estimatedARV) {
+      console.error(JSON.stringify({ error: 'Estimated ARV not found' }));
       process.exit(1);
     }
 
     console.log(JSON.stringify({
       address,
-      shareLink,
-      arv: dealData.arv || null,
-      details: dealData.details || null
+      estimatedARV
     }));
 
   } catch (err) {
