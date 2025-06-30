@@ -31,19 +31,19 @@ const puppeteer = require('puppeteer');
     console.log('🔒 Current URL after login:', page.url());
     await page.screenshot({ path: 'post-login-debug.png' });
 
-    // Wait for address input
+    // Wait for address input - ensure we're on the right page
     await page.goto('https://www.chatarv.ai/dashboard/new', { waitUntil: 'networkidle2' });
     await page.waitForSelector('input[placeholder*="Find"]', { timeout: 15000 });
     const input = await page.$('input[placeholder*="Find"]');
 
-    await input.click(); // ✅ new: focus the input first
+    await input.click();
     await input.type(address, { delay: 50 });
-
-    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for dropdown to appear
-
-    await page.waitForSelector('ul[role="listbox"] > li', { timeout: 8000 });
+    await page.waitForTimeout(1500); // Give more time for dropdown to appear
+    await page.waitForSelector('ul[role="listbox"] > li', { visible: true, timeout: 10000 });
+    await page.screenshot({ path: 'before-dropdown-click.png' });
     const firstOption = await page.$('ul[role="listbox"] > li');
     await firstOption.click();
+    await page.screenshot({ path: 'after-dropdown-click.png' });
 
     await page.waitForSelector('button', { timeout: 30000 });
     await page.evaluate(() => {
