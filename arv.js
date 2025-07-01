@@ -33,8 +33,10 @@ const puppeteer = require('puppeteer');
     const postLoginHtml = await page.content();
     console.log('📝 FULL HTML after login:', postLoginHtml.substring(0, 2000));
 
-    // Add extra wait after login to allow SPA to render
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Add a 15-second wait after login before proceeding
+    await new Promise(resolve => setTimeout(resolve, 15000));
+    const afterWaitHtml = await page.content();
+    console.log('📝 FULL HTML after 15s wait:', afterWaitHtml.substring(0, 2000));
 
     // Wait for the search input to appear after login
     console.log('⏳ Waiting for search input...');
