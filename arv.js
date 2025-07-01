@@ -73,9 +73,9 @@ const puppeteer = require('puppeteer');
     }
 
     // Wait for and click the Confirm Information button
-    await page.waitForSelector('button', { visible: true, timeout: 20000 });
+    await page.waitForSelector('button[type="submit"]', { visible: true, timeout: 30000 });
     const confirmClicked = await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll('button'));
+      const btns = Array.from(document.querySelectorAll('button[type="submit"]'));
       const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase().includes('confirm information'));
       if (btn) {
         btn.click();
