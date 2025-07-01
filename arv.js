@@ -73,9 +73,9 @@ const puppeteer = require('puppeteer');
     }
 
     // Wait for and click the Confirm Information button
-    await page.waitForSelector('button[type="submit"]', { visible: true, timeout: 30000 });
+    await page.waitForSelector('button', { visible: true, timeout: 20000 });
     const confirmClicked = await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll('button[type="submit"]'));
+      const btns = Array.from(document.querySelectorAll('button'));
       const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase().includes('confirm information'));
       if (btn) {
         btn.click();
@@ -90,13 +90,19 @@ const puppeteer = require('puppeteer');
       process.exit(1);
     }
 
-    // Wait 30 seconds for comps to load
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    // Wait 90 seconds for comps to load
+    await new Promise(resolve => setTimeout(resolve, 90000));
 
     // Click the 'Pick for me' button
+    await page.waitForFunction(() => {
+      return Array.from(document.querySelectorAll('button')).some(
+        b => b.innerText && b.innerText.trim().toLowerCase() === 'pick for me'
+      );
+    }, { timeout: 60000 }); // Wait up to 60 seconds
+
     const pickClicked = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'));
-      const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase().includes('pick for me'));
+      const btn = btns.find(b => b.innerText && b.innerText.trim().toLowerCase() === 'pick for me');
       if (btn) {
         btn.click();
         return true;
